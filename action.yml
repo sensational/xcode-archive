@@ -1,0 +1,32 @@
+name: 'Xcode Archive'
+description: 'Archive an Xcode project'
+
+branding:
+  icon: 'command'
+  color: 'blue'
+
+inputs:
+  workspace:
+    description: 'Workspace'
+    required: false
+  project:
+    description: 'Project'
+    required: false
+  scheme:
+    description: 'Scheme'
+    required: false
+  configuration:
+    description: 'Configuration'
+    required: false
+  archive-path:
+    description: 'Archive path. If not specified will default to MainScheme.xcarchive'
+    required: false
+
+outputs:
+  archive-path:
+    description: 'Archive path'
+
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
+
