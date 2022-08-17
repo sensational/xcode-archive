@@ -26,7 +26,9 @@
   "homepage": "https://github.com/devbotsxyz/xcode-archive#readme",
   "dependencies": {
     "@actions/core": "^1.2.5",
-    "execa": "^4.0.3"
+    "@actions/io": "^1.1.2",
+    "execa": "^4.0.3",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.24.1",

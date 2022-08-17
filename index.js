@@ -20,11 +20,39 @@
 
 
 const core = require('@actions/core');
+const io = require('@actions/io');
 const execa = require('execa');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
+async function createTempDirectory() {
+  const IS_WINDOWS = process.platform === 'win32';
+
+  let tempDirectory = process.env['RUNNER_TEMP'] || '';
+
+  if (!tempDirectory) {
+    let baseLocation;
+
+    if (IS_WINDOWS) {
+      // On Windows use the USERPROFILE env variable
+      baseLocation = process.env['USERPROFILE'] || 'C:\\';
+    } else {
+      if (process.platform === 'darwin') {
+        baseLocation = '/Users';
+      } else {
+        baseLocation = '/home';
+      }
+    }
+    tempDirectory = path.join(baseLocation, 'actions', 'temp')
+  }
+
+  const dest = path.join(tempDirectory, uuidv4())
+  await io.mkdirP(dest)
+  return dest
+}
 
 // TODO Unclear if clean needs all these options
-const clean = async ({workspace, project, scheme, configuration}) => {
+const clean = async ({workspace, project, scheme, configuration, derivedDataDir}) => {
     const options = [];
     if (workspace != "") {
         options.push("-workspace", workspace);
@@ -38,6 +66,7 @@ const clean = async ({workspace, project, scheme, configuration}) => {
     if (configuration != "") {
         options.push("-configuration", configuration);
     }
+    options.push("-derivedDataPath", derivedDataDir);
 
     const args = [
         ...options,
@@ -52,7 +81,7 @@ const clean = async ({workspace, project, scheme, configuration}) => {
 };
 
 
-const archive = async ({workspace, project, scheme, configuration, archivePath}) => {
+const archive = async ({workspace, project, scheme, configuration, archivePath, derivedDataDir}) => {
     const options = [];
     if (workspace != "") {
         options.push("-workspace", workspace);
@@ -66,6 +95,7 @@ const archive = async ({workspace, project, scheme, configuration, archivePath})
     if (configuration != "") {
         options.push("-configuration", configuration);
     }
+    options.push("-derivedDataPath", derivedDataDir);
 
     const archiveOptions = [];
     if (archivePath != "") {
@@ -114,6 +144,7 @@ const parseConfiguration = async () => {
         scheme: core.getInput("scheme"),
         configuration: core.getInput("configuration"),
         archivePath: core.getInput("archive-path"),
+        derivedDataDir: core.getInput("derived-data-dir"),
     };
 
     // If the scheme or archivePath is not provided then we discover it
@@ -128,6 +159,10 @@ const parseConfiguration = async () => {
         if (configuration.archivePath === "") {
             configuration.archivePath = configuration.scheme + ".xcarchive";
         }
+    }
+
+    if (configuration.derivedDataDir === "") {
+        configuration.derivedDataDir = await createTempDirectory();
     }
 
     return configuration;
